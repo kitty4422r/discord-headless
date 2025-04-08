@@ -1,14 +1,20 @@
-# Use the official Selenium Docker image with Chrome
-FROM selenium/standalone-chrome:latest
+version: '3'
+services:
+  selenium:
+    build: .
+    ports:
+      - "4444:4444"
+      - "5900:5900"
+    environment:
+      - SE_NODE_OVERRIDE_MAX_SESSION=true
+    volumes:
+      - /dev/shm:/dev/shm
 
-# Install noVNC and X11VNC (necessary for noVNC to work)
-USER root
-RUN apt-get update && \
-    apt-get install -y novnc websockify x11vnc && \
-    apt-get clean
-
-# Expose the necessary ports for Selenium and VNC
-EXPOSE 4444 5900 6080
-
-# Set up noVNC and VNC server to run on container start
-CMD ["sh", "-c", "x11vnc -forever -usepw -create & websockify -D 6080 localhost:5900 && /opt/selenium/bin/entry_point.sh"]
+  novnc:
+    image: consol/novnc
+    ports:
+      - "6080:6080"
+    depends_on:
+      - selenium
+    environment:
+      - VNC_SERVER=selenium:5900
